@@ -1,0 +1,43 @@
+import os
+from img2table.ocr import TesseractOCR
+from img2table.document import Image
+import pandas as pd
+
+# photo path 
+input_image_path = "photo.jpg" 
+
+def image_to_excel_colab(image_path):
+    if not os.path.exists(image_path):
+        print(f"❌ failed {image_path} pls upload photo .")
+        return
+
+    print(" processing...")
+    
+      
+    # lang='fas' if Persian 
+    ocr = TesseractOCR(n_threads=1, lang='eng') 
+
+    try:
+       
+        img = Image(src=image_path)
+        extracted_tables = img.extract_tables(ocr=ocr, implicit_rows=True, min_confidence=50)
+
+        if not extracted_tables:
+            print("⚠️ not found")
+            return
+
+         
+        output_filename = "Excel_Output.xlsx"
+        with pd.ExcelWriter(output_filename, engine='openpyxl') as writer:
+            for i, table in enumerate(extracted_tables):
+                sheet_name = f'Table_{i+1}'
+                table.df.to_excel(writer, sheet_name=sheet_name, index=False, header=False)
+        
+        print(f"✅  finished {output_filename} successful .")
+        print("📥 download file ")
+        
+    except Exception as e:
+        print(f"❌ error: {e}")
+
+
+image_to_excel_colab(input_image_path)
